@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Qalb Collections
 
-## Getting Started
+A luxury e-commerce platform for premium watches (and upcoming perfumes), built for the Pakistani market. Narrow, considered inventory; editorial photography; honest descriptions.
 
-First, run the development server:
+## Stack
+
+- **Framework**: Next.js (App Router, TypeScript)
+- **Database**: Prisma ORM — SQLite for development, PostgreSQL for production
+- **Auth**: Custom session-cookie auth (no third-party provider required)
+- **Styling**: Tailwind CSS
+- **Payments**: Cash-on-delivery and bank transfer out of the box; Stripe wiring is present but disabled until needed
+
+## Getting started
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Set up environment variables
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`. The defaults work for local development (SQLite, console analytics, COD/bank transfer payments). The one value you must change before going to production is `NEXT_PUBLIC_SITE_URL`.
+
+### 3. Set up the database and seed initial data
+
+```bash
+npm run db:generate   # generate Prisma client
+npm run db:push       # apply schema to SQLite (dev only)
+npm run db:seed       # creates admin user, sample products, site settings
+```
+
+### 4. Start the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The admin panel is at `/admin`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Default credentials (set in `.env`):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Role     | Email                        | Password      |
+| -------- | ---------------------------- | ------------- |
+| Admin    | admin@qalbcollections.com    | ChangeMe!2026 |
+| Customer | customer@example.com         | ChangeMe!2026 |
 
-## Learn More
+Change these before any public deployment.
 
-To learn more about Next.js, take a look at the following resources:
+## Available scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Script              | Description                                            |
+| ------------------- | ------------------------------------------------------ |
+| `npm run dev`       | Development server with hot reload                     |
+| `npm run build`     | Production build (runs `prisma generate` first)        |
+| `npm run start`     | Start the production server                            |
+| `npm run lint`      | ESLint check                                           |
+| `npm run typecheck` | TypeScript check without emitting                      |
+| `npm run format`    | Prettier — format all source files                     |
+| `npm run db:seed`   | Seed admin user, sample products and site settings     |
+| `npm run db:reset`  | Wipe and re-migrate the database (dev only)            |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+Before deploying:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Set `DATABASE_URL` to a PostgreSQL connection string and update `prisma/schema.prisma` to use `provider = "postgresql"`.
+2. Run `npm run db:deploy` (not `db:push`) to apply migrations without destructive resets.
+3. Set `NEXT_PUBLIC_SITE_URL` to the production domain (e.g. `https://qalbcollections.com`). This value is used for canonical URLs, the sitemap, Open Graph tags and JSON-LD — it must match the live origin exactly.
+4. Generate a strong `AUTH_SECRET` with `openssl rand -base64 48`.
+5. Set `PAYMENT_PROVIDERS` as needed.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project structure
+
+```
+src/
+  app/
+    (storefront)/   # Public-facing pages (home, shop, product, journal …)
+    (checkout)/     # Minimal checkout shell (no nav, no cross-sell)
+    admin/          # Admin panel — product, order, content management
+    api/            # API route handlers
+  components/       # UI components (layout, product, checkout, marketing …)
+  lib/              # Shared utilities (auth, payments, SEO, money, settings …)
+  server/           # Server-side data fetching and actions
+prisma/
+  schema.prisma     # Database schema
+  seed.ts           # Initial data
+```
